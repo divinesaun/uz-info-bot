@@ -1,60 +1,19 @@
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
-from faiss import (
-    IndexFlatL2
-)
-from langchain_community.docstore.in_memory import (
-    InMemoryDocstore
-)
-from langchain_community.vectorstores import FAISS
-import streamlit as st # adjust this import based on your setup
-import time
+from langchain_google_genai import ChatGoogleGenerativeAI
+import streamlit as st
 from dotenv import load_dotenv
+from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
 
 load_dotenv()
-
-embedding_function = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
-
-dimensions: int = len(embedding_function.embed_query("dummy"))
-db = FAISS(
-            embedding_function=embedding_function,
-            index=IndexFlatL2(dimensions),
-            docstore=InMemoryDocstore(),
-            index_to_docstore_id={},
-            normalize_L2=False
-        )
-
-vector = db.load_local("uz", embeddings=embedding_function, allow_dangerous_deserialization=True)
-
-from langchain_core.tools import tool
-
-@tool(response_format="content_and_artifact")
-def retrieve(query: str):
-    """Retrieve information related to a query."""
-    retrieved_docs = vector.similarity_search(query)
-    serialized = "\n\n".join(
-        (f"Source: {doc.metadata}\n" f"Content: {doc.page_content}")
-        for doc in retrieved_docs
-    )
-    return serialized, retrieved_docs
 
 from langchain_tavily import TavilySearch
 
 tool = TavilySearch(
     max_results=2,
     topic="general",
-    # include_answer=False,
-    # include_raw_content=False,
-    # include_images=False,
-    # include_image_descriptions=False,
-    # search_depth="basic",
-    # time_range="day",
     include_domains=["https://www.uz.ac.zw"],
-    # exclude_domains=None
 )
-
-from langgraph.prebuilt import create_react_agent
-from langgraph.checkpoint.memory import MemorySaver
 
 checkpoint = MemorySaver()
 
@@ -70,10 +29,7 @@ address to the user that it is irrelevant. Follow a friendly, conversational ton
 config = {"configurable": {"thread_id": "abc123"}}
 agent = create_react_agent(llm, [tool], checkpointer=checkpoint, prompt=prompt)
 
-import streamlit as st
-import time
-
-st.title("UZ Help Desk Bot")
+st.title("UZ Help Desk Bot 🤖")
 
 # Initialize chat history
 if "messages" not in st.session_state:
