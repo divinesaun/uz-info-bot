@@ -17,14 +17,8 @@ tool = TavilySearch(
 
 checkpoint = MemorySaver()
 
-prompt = """
-You are a chatbot that provides information to users who want to know about the University of Zimbabwe, and keeping
-up with current information. Topics of questions may range from admissions, general information about the university,
-and the school current affairs.
-First greet the user warmly and ask them if they have any questions,
-be ready to answer their questions and use retrieve tool to get information. If a question is irrelevant,
-address to the user that it is irrelevant. Follow a friendly, conversational tone.
- """
+with open("prompt.txt", "r") as f:
+    prompt = f.read()
 
 config = {"configurable": {"thread_id": "abc123"}}
 agent = create_react_agent(llm, [tool], checkpointer=checkpoint, prompt=prompt)
