@@ -23,7 +23,7 @@ with open("prompt.txt", "r") as f:
 config = {"configurable": {"thread_id": "abc123"}}
 agent = create_react_agent(llm, [tool], checkpointer=checkpoint, prompt=prompt)
 
-st.title("UZ Help Desk Bot 🤖")
+st.title("UZ Info Bot 🤖")
 
 # Initialize chat history
 if "messages" not in st.session_state:
