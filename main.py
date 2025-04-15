@@ -3,14 +3,35 @@ import streamlit as st
 from dotenv import load_dotenv
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
+from faiss import (
+    IndexFlatL2
+)
+from langchain_community.docstore.in_memory import (
+    InMemoryDocstore
+)
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain.vectorstores import FAISS
+from langchain_tavily import TavilySearch
+from langchain_core.tools import tool
 
 load_dotenv()
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
+embedding_function = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
-from langchain_tavily import TavilySearch
+vector = FAISS.load_local("admissions", embeddings=embedding_function, allow_dangerous_deserialization=True)
+
+@tool(response_format="content_and_artifact")
+def retrieve(query: str):
+    """Retrieve information related to a query."""
+    retrieved_docs = vector.similarity_search(query, k=10)
+    serialized = "\n\n".join(
+        (f"Source: {doc.metadata}\n" f"Content: {doc.page_content}")
+        for doc in retrieved_docs
+    )
+    return serialized, retrieved_docs
 
 tool = TavilySearch(
-    max_results=2,
+    max_results=3,
     topic="general",
     include_domains=["https://www.uz.ac.zw"],
 )
@@ -21,7 +42,7 @@ with open("prompt.txt", "r") as f:
     prompt = f.read()
 
 config = {"configurable": {"thread_id": "abc123"}}
-agent = create_react_agent(llm, [tool], checkpointer=checkpoint, prompt=prompt)
+agent = create_react_agent(llm, [retrieve, tool], checkpointer=checkpoint, prompt=prompt)
 
 st.title("UZ Info Bot 🤖")
 
