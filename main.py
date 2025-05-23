@@ -23,7 +23,7 @@ db = FAISS(
             normalize_L2=False
         )
 
-vector = db.load_local("admissions", embeddings=embedding_function, allow_dangerous_deserialization=True)
+vector = db.load_local("vector_updated", embeddings=embedding_function, allow_dangerous_deserialization=True)
 
 @tool(response_format="content_and_artifact")
 def retrieve(query: str):
