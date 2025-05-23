@@ -74,6 +74,20 @@ def grade_docs(state: AgentState):
 
     chain = prompt | llm_with_data_model
 
+    messages = state["messages"]
+    last_message = messages[-1]
+
+    question = messages[0].content
+    docs = last_message.content
+
+    scored_result = chain.invoke({"question": question, "context": docs})
+    score = scored_result.binary_score
+
+    if score == "yes":
+        return "generate"
+    else:
+        return "tavily"
+
 
 agent = create_react_agent(llm, [retrieve, tool], checkpointer=checkpoint, prompt=prompt)
 
