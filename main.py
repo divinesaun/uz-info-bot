@@ -9,6 +9,9 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGener
 from langchain_community.vectorstores import FAISS
 from langchain_tavily import TavilySearch
 from langchain_core.tools import tool
+from typing import Annotated, Sequence, TypedDict
+from langchain_core.messages import BaseMessage
+from langgraph.graph.message import add_messages
 
 load_dotenv()
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
@@ -47,6 +50,12 @@ with open("prompt.txt", "r") as f:
     prompt = f.read()
 
 config = {"configurable": {"thread_id": "abc123"}}
+
+class AgentState(TypedDict):
+    messages: Annotated[Sequence[BaseMessage], add_messages]
+
+
+
 agent = create_react_agent(llm, [retrieve, tool], checkpointer=checkpoint, prompt=prompt)
 
 st.title("UZ Info Bot 🤖")
