@@ -1,14 +1,10 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
 import streamlit as st
 from dotenv import load_dotenv
-from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
 from faiss import (
     IndexFlatL2
 )
-from langchain_community.docstore.in_memory import (
-    InMemoryDocstore
-)
+from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from langchain_tavily import TavilySearch
@@ -17,8 +13,17 @@ from langchain_core.tools import tool
 load_dotenv()
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
 embedding_function = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+dimensions: int = len(embedding_function.embed_query("dummy"))
 
-vector = FAISS.load_local("admissions", embeddings=embedding_function, allow_dangerous_deserialization=True)
+db = FAISS(
+            embedding_function=embedding_function,
+            index=IndexFlatL2(dimensions),
+            docstore=InMemoryDocstore(),
+            index_to_docstore_id={},
+            normalize_L2=False
+        )
+
+vector = db.load_local("admissions", embeddings=embedding_function, allow_dangerous_deserialization=True)
 
 @tool(response_format="content_and_artifact")
 def retrieve(query: str):
