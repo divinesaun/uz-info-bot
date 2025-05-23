@@ -12,6 +12,8 @@ from langchain_core.tools import tool
 from typing import Annotated, Sequence, TypedDict
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
+from pydantic import BaseModel, Field
+from langchain_core.prompts import PromptTemplate
 
 load_dotenv()
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
@@ -54,6 +56,23 @@ config = {"configurable": {"thread_id": "abc123"}}
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
 
+llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0, streaming=True)
+
+def grade_docs(state: AgentState):
+    class Grade(BaseModel):
+        binary_score: str = Field(description="Relevance score 'yes' or 'no'")
+    
+    llm_with_data_model = llm.with_structured_output(Grade)
+    prompt = PromptTemplate(
+        template="""You are a grader assessing relevance of a retrieved document to a user question. \n 
+        Here is the retrieved document: \n\n {context} \n\n
+        Here is the user question: {question} \n
+        If the document contains keyword(s) or semantic meaning related to the user question, grade it as relevant. \n
+        Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question.""",
+        input_variables=["context", "question"],
+    )
+
+    chain = prompt | llm_with_data_model
 
 
 agent = create_react_agent(llm, [retrieve, tool], checkpointer=checkpoint, prompt=prompt)
