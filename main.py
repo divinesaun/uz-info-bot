@@ -1,20 +1,47 @@
-import streamlit as st
-from dotenv import load_dotenv
-from langgraph.checkpoint.memory import MemorySaver
-from faiss import (
-    IndexFlatL2
-)
-from langchain_community.docstore.in_memory import InMemoryDocstore
+import datetime
+
+from langchain.agents import create_openai_tools_agent, AgentExecutor
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_tavily import TavilySearch
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_tavily import TavilySearch, TavilyExtract
+from langchain.schema import HumanMessage, SystemMessage
+from dotenv import load_dotenv
 
+# Initialize LLM
+llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0, streaming=True)
 
-load_dotenv()
-llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
+# Initialize Tavily Search Tool
+tavily_search_tool = TavilySearch(
+    max_results=5,
+    topic="general",
+)
+# Initialize Tavily Extract Tool
+tavily_extract_tool = TavilyExtract()
 
-     
+tools = [tavily_search_tool, tavily_extract_tool]
 
-agent = create_react_agent(llm, [retrieve, tool], checkpointer=checkpoint, prompt=prompt)
+# Set up Prompt with 'agent_scratchpad'
+today = datetime.datetime.today().strftime("%D")
+prompt = ChatPromptTemplate.from_messages([
+    ("system", f"""You are a helpful reaserch assistant, you will be given a query and you will need to
+    search the web for the most relevant information then extract content to gain more insights. The date today is {today}."""),
+    MessagesPlaceholder(variable_name="messages"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),  # Required for tool calls
+])
+# Create an agent that can use tools
+agent = create_openai_tools_agent(
+    llm=llm,
+    tools=tools,
+    prompt=prompt
+)
+
+# Create an Agent Executor to handle tool execution
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+
+user_input =  "Research the latest developments in quantum computing and provide a detailed summary of how it might impact cybersecurity in the next decade."
+
+# Construct input properly as a dictionary
+response = agent_executor.invoke({"messages": [HumanMessage(content=user_input)]})
 
 # st.title("UZ Info Bot 🤖")
 
