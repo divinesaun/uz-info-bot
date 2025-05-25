@@ -88,6 +88,36 @@ def grade_docs(state: AgentState):
     else:
         return "tavily"
 
+def tavily_search(state: AgentState):
+    question = state["messages"][0].content
+    context = TavilySearch.invoke(question)
+    
+    class Grade(BaseModel):
+        binary_score: str = Field(description="Relevance score 'yes' or 'no'")
+    
+    llm_with_data_model = llm.with_structured_output(Grade)
+    prompt = PromptTemplate(
+        template="""You are a grader assessing relevance of a retrieved document to a user question. \n 
+        Here is the retrieved document: \n\n {response} \n\n
+        Here is the user question: {context} \n
+        If the document contains keyword(s) or semantic meaning related to the user question, grade it as relevant. \n
+        Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question.""",
+        input_variables=["context", "question"],
+    )
+    
+    chain = prompt | llm_with_data_model
+    response = chain.invoke({"question": question, "context": context})
+    score = response.binary_score
+    if score == "yes":
+        return "continue"
+    else:
+        return "not found"
+    
+
+def generate(state: AgentState):
+    question = state["messages"][0].content
+    
+    
 
 agent = create_react_agent(llm, [retrieve, tool], checkpointer=checkpoint, prompt=prompt)
 
