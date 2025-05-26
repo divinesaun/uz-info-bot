@@ -19,6 +19,7 @@ tavily_search_tool = TavilySearch(
     topic="general",
     include_domains=["https://www.uz.ac.zw", "https://en.wikipedia.org/wiki/University_of_Zimbabwe"]
 )
+
 # Initialize Tavily Extract Tool
 tavily_extract_tool = TavilyExtract()
 
@@ -59,6 +60,7 @@ user_input =  "Can you provide me with some info about UZ."
 response = agent.invoke({"messages": [HumanMessage(content=user_input)]}, config=thread)
 
 st.title("UZ Info Bot 🤖")
+st.logo("uz.jpg", link="https://www.uz.ac.zw", size="large")
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -70,7 +72,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # React to user input
-if prompt := st.chat_input("What is up?"):
+if prompt := st.chat_input("Message"):
     # Display user message in chat message container
     st.chat_message("user").markdown(prompt)
     # Add user message to chat history
