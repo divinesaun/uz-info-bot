@@ -54,10 +54,10 @@ agent = create_react_agent(
 )
 
 
-user_input =  "Can you provide me with some info about UZ."
+# user_input =  "Can you provide me with some info about UZ."
 
 # Construct input properly as a dictionary
-response = agent.invoke({"messages": [HumanMessage(content=user_input)]}, config=thread)
+# response = agent.invoke({"messages": [HumanMessage(content=user_input)]}, config=thread)
 
 st.title("UZ Info Bot 🤖")
 st.logo("uz.jpg", link="https://www.uz.ac.zw", size="large")
