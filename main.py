@@ -1,14 +1,19 @@
 import datetime
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_tavily import TavilySearch, TavilyExtract
-from langchain.schema import HumanMessage
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.sqlite import SqliteSaver
 import sqlite3
 import streamlit as st
+import os
 
 from dotenv import load_dotenv
 load_dotenv()
+
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
+os.environ["LANGCHAIN_PROJECT"] = "uz_info_bot"
 
 # Initialize LLM
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0, streaming=True)
@@ -56,7 +61,7 @@ agent = create_react_agent(
 
 # user_input =  "Can you provide me with some info about UZ."
 
-# Construct input properly as a dictionary
+# # Construct input properly as a dictionary
 # response = agent.invoke({"messages": [HumanMessage(content=user_input)]}, config=thread)
 
 st.title("UZ Info Bot 🤖")
